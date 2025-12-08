@@ -8,12 +8,3 @@
 #       - Check if it's a hit or miss
 #       - Update the board
 # 4. When all ships are sunk, print "You win"
-
-from game import Game
-
-def main():
-    game = Game()
-    game.start()
-
-if __name__ == "__main__":
-    main()
