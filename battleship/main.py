@@ -1,10 +1,20 @@
-# Battleship game
+"""
+Entry point for the Battleship game.
 
-# 1. Create the board
-# 2. Place ships on the board
-# 3. While ships are still alive:
-#       - Show the board (only hits/misses)
-#       - Get a guess from the player
-#       - Check if it's a hit or miss
-#       - Update the board
-# 4. When all ships are sunk, print "You win"
+This file creates the Game object and the GUI window.
+"""
+import tkinter as tk
+from game import Game
+from gui import BattleshipGUI
+
+def main():
+    game = Game(board_size=10)
+
+    root = tk.TK()
+
+    BattleshipGUI(root, game)
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
