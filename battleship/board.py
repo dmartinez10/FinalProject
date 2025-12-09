@@ -9,10 +9,10 @@ import random
 
 class Ship:
 
-    def __init__(self, length: int):
+    def __init__(self, length):
         self.length = length
         self.coordinates = []
-        self.hits = set()
+        self.hits = []
 
     def place(self, coords):
         """Save the positions where this ship is placed"""
@@ -29,13 +29,13 @@ class Ship:
         for pos in self.coordinates:
             if pos not in self.hits:
                 return False
-            return True
+        return True
 
 class Board:
     """Represents a Battleship board with a 2D grid and ships."""
 
     EMPTY = 0
-    SHIP = 0
+    SHIP = 1
     HIT = 2
     MISS = 3
 
@@ -45,7 +45,7 @@ class Board:
         self.grid = [[Board.EMPTY for _ in range(size)] for _ in range(size)]
         self.ships = [] #list of ship objects
 
-    def in_bounds(self, row: int, col: int) -> bool:
+    def in_bounds(self, row, col):
         """Return True if (row, col) is a valid cell on the board."""
         if row < 0 or row >= self.size:
             return False
@@ -53,7 +53,7 @@ class Board:
             return False
         return True
     
-    def can_place_ship(self, length: int, row: int, col: int, horizontal: bool) -> bool:
+    def can_place_ship(self, length, row, col, horizontal):
         """
         Check if we can place a ship of given length starting at (row, col)
         in a straight line horizontally or vertically.
@@ -63,7 +63,7 @@ class Board:
                 r = row
                 c = col + i
             else:
-                r = row + 1
+                r = row + i
                 c = col
             
             if not self.in_bounds(r, c):
@@ -84,8 +84,8 @@ class Board:
 
         while not placed:
             horizontal = random.choice([True, False])
-            row = random.randit(0, self.size -1)
-            col = random.randit(0, self.size -1)
+            row = random.randint(0, self.size -1)
+            col = random.randint(0, self.size -1)
 
             if self.can_place_ship(length, row, col, horizontal):
                 coords = []
@@ -98,7 +98,7 @@ class Board:
                         c = col
                     
                     self.grid[r][c] = Board.SHIP
-                    coords.append([r, c])
+                    coords.append((r, c))
 
                 new_ship = Ship(length)
                 new_ship.place(coords)
@@ -107,7 +107,7 @@ class Board:
                 return new_ship
 
 
-    def received_shot(self, row, col):
+    def receive_shot(self, row, col):
         """
         Handle a shot at (row, col)
         Returns:
@@ -144,10 +144,10 @@ class Board:
             self.grid[row][col] = Board.MISS
             return "miss"
     
-    def all_ship_sunk(self) -> bool:
+    def all_ships_sunk(self):
         """Return True if every ship on this board is sunk."""
         for ship in self.ships:
-            if not ship._is_sunk():
+            if not ship.is_sunk():
                 return False
-            return True
+        return True
     

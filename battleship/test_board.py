@@ -1,4 +1,4 @@
-# test_board.py (just for you to test)
+# test the board.py to see if its working
 from board import Board
 
 b = Board(5)

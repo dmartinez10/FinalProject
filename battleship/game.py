@@ -9,52 +9,50 @@ Handles:
 - High score saving/loading (extra credit)
 """
 
-from pathlib import Path
-import json
 import random
-
+import json
 from board import Board
 
-HIGHSCORE_FILE = Path("highscores.json")
 
 class Game:
     """Core game logic for Battleship."""
 
-    def __init__(self, board_size: int = 10):
-        self.size = board_size
-        self.player_board = Board(board_size)
-        self.computer_board = Board(board_size)
+    def __init__(self, size=10):
+        self.size = size
 
-        # ship sizes adjustment
+        #board for player and computer
+        self.player_board = Board(size)
+        self.computer_board = Board(size)
+
+        # standard ship lengths
         self.ship_lengths = [5, 4, 3, 3, 2]
 
-        # turn tracking
+        # track whos turn it is
         self.player_turn = True
+        #tracks shots for high score
         self.player_shots = 0
         self.computer_shots = 0
 
         # game state
         self.game_over = False
-        self.winner: str | None = None #'player' or 'computer'
+        self.winner = None #'player' or 'computer'
 
         # place ship for both boards
-    def place_all_ships(self) -> None:
-        """Place ships for both player and computer (currently random)."""
-        # TODO:
-        # for each length in self.ship_lengths:
-        #   call place_ship_randomly(length) on both boards
-        pass
+        self.place_all_ships()
 
-    def player_fire(self, row: int, col: int) -> str:
+    def place_all_ships(self):
+        """Place ships for both player and computer (currently random)."""
+        for length in self.ship_lengths:
+            self.player_board.place_ship_randomly(length)
+            self.computer_board.place_ship_randomly(length)
+
+#players turn
+    def player_fire(self, row, col):
         """
         Player fires at a cell on the computer's board.
 
         Returns:
-            'hit', 'miss', 'already', 'sunk',
-            'game_over' if this shot wins the game,
-            or 'invalid' if the click was outside the board.
-
-        This is where we do exception handling for invalid shots.
+            'hit', 'miss', 'already', 'invalid', 'sunk','game_over' if this shot wins the game,
         """
         if self.game_over:
             return "game_over"
@@ -62,93 +60,86 @@ class Game:
         try:
             result = self.computer_board.receive_shot(row, col)
         except ValueError:
-            # out of bounds shot
             return "invalid"
         
-        # TODO:
-        # If result is not 'already' or 'invalid', increase self.player_shots
-        # Check if computer_board.all_ships_sunk() -> if yes:
-        #    set game_over, set winner = "player"
-        #    call self._save_high_score(self.player_shots)
-        #    return 'game_over'
-        # If the shot was new (not 'already'), change self.player_turn = False
+        #count valid new shots
+        if result not in ("already", "invalid"):
+            self.player_shots += 1
+        
+        #checks if computer lost
+        if self.computer_board.all_ships_sunk():
+            self.game_over = True
+            self.winner = "player"
+            self._save_high_score(self.player_shots)
+            return "game_over"
+        
+        #if the shot was invalid, switch turns
+        if result not in ("already", "invalid"):
+            self.player_turn = False
 
-        return result # placeholder, update when add logic
+        return result
     
-    def computer_fire(self) -> tuple[int, int, str]:
+    #computer turn
+    def computer_fire(self):
         """
         Computer randomly fires at the player's board.
-
-        Returns:
-            (row, col, result)
+        Returns: (row, col, result)
         """
         if self.game_over:
-            return -1, -1, "game_over"
+            return (-1, -1, "game_over")
         
+        while True:
+            row = random.randint(0, self.size - 1)
+            col = random.randint(0, self.size - 1)
 
-        # TODO:
-        # Repeat until you find a cell that is not already HIT/MISS:
-        #   row = random.randint(0, self.size - 1)
-        #   col = random.randint(0, self.size - 1)
-        #   call player_board.receive_shot(row, col)
-        #
-        # Increase self.computer_shots
-        # If all player's ships sunk -> set game_over and winner = "computer"
-        # Change self.player_turn = True when done
+            cell = self.player_board.grid[row][col]
 
-        return -1, -1, "miss" #placeholder
+            if cell == Board.HIT or cell == Board.MISS:
+                continue #if already shot here, pick again
+
+            try:
+                result = self.player_board.receive_shot(row, col)
+            except ValueError:
+                continue
+
+            break
+
+        self.computer_shots += 1
+
+        #checks if the player lost
+        if self.player_board.all_ships_sunk():
+            self.game_over = True
+            self.winner = "computer"
+            return (row, col, "game_over")
+        
+        self.player_turn = True
+
+        return (row, col, result)
     
-#####EXTRA CREDIT HIGH SCORE METHOD
+#EXTRA CREDIT section HIGH SCORE
 
-    def _load_high_scores(self) -> list[dict]:
-        """
-        Load high scores from JSON file.
-
-        Uses exception handling so the game doesn't crash
-        if the file is missing or corrupted.
-        """
-        if not HIGHSCORE_FILE.exist():
-            return []
-        
+    def _load_high_scores(self):
+        """Loads saved scores from highscores.json"""
         try:
-            with HIGHSCORE_FILE.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, OSError):
-            # bad file or read error -> just pretend no scores exist
+            with open("highscores.json", "r") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
             return []
         
-        # ensure its a list of dicts
-        if isinstance(data, list):
-            return data
-        return []
-    
-    def _save_high_score(self, shots: int) -> None:
-        """
-        Save a new high score entry.
-
-        We store a list of dictionaries like:
-        [
-          {"shots": 35},
-          {"shots": 40}
-        ]
-        """
-        
-        scores = self._load_high_scores()
+    def _save_high_score(self, shots):
+        """saves a new score and keeps only the best 10"""
+        scores = self._load_scores()
         scores.append({"shots": shots})
 
-        # sort scores so fewer shots is better
-        scores.sort(key=lambda entry: entry.get("shots", 9999))
+        #sorts, fewer shots = better
+        scores.sort(key=lambda s: s["shots"])
 
-        # keep top 10
+        #keep best 10
         scores = scores[:10]
 
-        try:
-            with HIGHSCORE_FILE.open("w", encoding="utf-8") as f:
-                json.dump(scores, f, indent=2)
-        except OSError:
-            # cant write file? ignore, game should not crash
-            pass
+        with open("highscores.json", "w") as f:
+            json.dump(scores, f, indent=2)
 
-    def _get_high_scores(self) -> list[dict]:
-        """Return high scores (used by GUI to display them)."""
+    def get_high_scores(self):
+        """allows GUI to read high score"""
         return self._load_high_scores
