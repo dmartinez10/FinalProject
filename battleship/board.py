@@ -14,109 +14,140 @@ class Ship:
         self.coordinates = []
         self.hits = set()
 
-    def place(self, coords: list[tuple[int, int]]) -> None:
-        """
-        Save the locations for this ship.
-        coords: list of (row, col) positions.
-        """
-        # TODO: store coords in the attribute
+    def place(self, coords):
+        """Save the positions where this ship is placed"""
+        self.coordinates = coords
 
-    def register_hit(self, row: int, col: int) -> None:
-        """
-        Mark a position as hit if it belongs to this ship.
-        """
-        # TODO:
-        # 1. Check if (row, col) is part of this ship
-        # 2. If yes, add it to self.hits
 
-    def is_sunk(self) -> bool:
-        """
-        Return True if every coordinate for this ship has been hit.
-        """
-        # TODO:
-        # Compare set(self.coordinates) and self.hits
-        # return True when all coordinates are in hits
-        return False  # placeholder
+    def register_hit(self, row, col):
+        """Mark a position as hit if it belongs to this ship."""
+        if (row, col) in self.coordinates and (row, col) not in self.hits:
+            self.hits.append((row, col))
+
+    def is_sunk(self):
+        """Return True if every coordinate for this ship has been hit."""
+        for pos in self.coordinates:
+            if pos not in self.hits:
+                return False
+            return True
 
 class Board:
-    """
-    Represents a Battleship board with a 2D grid and ships.
-    """
+    """Represents a Battleship board with a 2D grid and ships."""
 
-    def __init__(self, size: int = 10):
+    EMPTY = 0
+    SHIP = 0
+    HIT = 2
+    MISS = 3
+
+    def __init__(self, size=10):
         self.size = size
         #2d list (list of rows, each row is a list of units)
         self.grid = [[Board.EMPTY for _ in range(size)] for _ in range(size)]
-        self.ships: list[Ship] = []
+        self.ships = [] #list of ship objects
 
     def in_bounds(self, row: int, col: int) -> bool:
         """Return True if (row, col) is a valid cell on the board."""
-        # TODO: check row and col are between 0 and size-1
-        return False #placeholder
+        if row < 0 or row >= self.size:
+            return False
+        if col < 0 or col >= self.size:
+            return False
+        return True
     
     def can_place_ship(self, length: int, row: int, col: int, horizontal: bool) -> bool:
         """
         Check if we can place a ship of given length starting at (row, col)
         in a straight line horizontally or vertically.
         """
-        # TODO:
-        # Loop from 0 to length-1
-        #   compute r, c depending on horizontal
-        #   if out of bounds or grid[r][c] is not EMPTY, return False
-        # If loop finishes, return True
-        return False  # placeholder
+        for i in range(length):
+            if horizontal:
+                r = row
+                c = col + i
+            else:
+                r = row + 1
+                c = col
+            
+            if not self.in_bounds(r, c):
+                return False
+            
+            if self.grid[r][c] != Board.EMPTY:
+                #An object is there
+                return False
+            
+        return True
 
-    def place_ship_randomly(self, length: int) -> Ship:
+    def place_ship_randomly(self, length):
         """
-        Randomly place a ship on the board and return the Ship object.
-
-        Uses random module:
-        - Choose random orientation (horizontal/vertical)
-        - Choose random starting cell
-        - Try again until it fits
+        Place one ship of a given legnth on a random valid spot
+        Returns the ship object
         """
-        # TODO:
-        # Use a while True loop
-        #   pick horizontal = random.choice([True, False])
-        #   pick random row, col
-        #   if can_place_ship(...):
-        #       build a list of coordinates
-        #       mark grid cells as SHIP
-        #       create Ship object, call place(coords), append to self.ships
-        #       return the ship
+        placed = False
 
-        # temporary placeholder so file runs
-        raise NotImplementedError("place_ship_randomly is not implemented yet")
+        while not placed:
+            horizontal = random.choice([True, False])
+            row = random.randit(0, self.size -1)
+            col = random.randit(0, self.size -1)
 
-    def received_shot(self, row: int, col: int) -> str:
+            if self.can_place_ship(length, row, col, horizontal):
+                coords = []
+                for i in range(length):
+                    if horizontal:
+                        r = row
+                        c = col + i
+                    else:
+                        r = row + i
+                        c = col
+                    
+                    self.grid[r][c] = Board.SHIP
+                    coords.append([r, c])
+
+                new_ship = Ship(length)
+                new_ship.place(coords)
+                self.ships.append(new_ship)
+                placed = True
+                return new_ship
+
+
+    def received_shot(self, row, col):
         """
-        Apply a shot to the board.
-
+        Handle a shot at (row, col)
         Returns:
-            'hit', 'miss', 'already', or 'sunk'
-
+            "hit" if it hits a ship
+            "miss" if it goes in the water
+            "already" if the cell was already shot before
         Raises:
-            ValueError if (row, col) is outside the board.
+            ValueError if the shot is outside the board
         """
-        # TODO:
-        # 1. If out of bounds -> raise ValueError
-        # 2. Read current cell = self.grid[row][col]
-        # 3. If cell is HIT or MISS -> return 'already'
-        # 4. If cell is SHIP:
-        #       mark it as HIT
-        #       find which ship has this coord, call register_hit
-        #       if that ship is_sunk() -> return 'sunk'
-        #       else -> return 'hit'
-        # 5. If cell is EMPTY:
-        #       mark it as MISS
-        #       return 'miss'
-        return "miss"  # placeholder
+        if not self.in_bounds(row, col):
+            raise ValueError("Shot out of bounds")
+        
+        cell = self.grid[row][col]
+
+        # if it already shot here
+        if cell == Board.HIT or cell == Board.MISS:
+            return "already"
+        
+        #if it hits a ship
+        if cell == Board.SHIP:
+            self.grid[row][col] = Board.HIT
+
+            #finds which ship got hit
+            for ship in self.ships:
+                if (row, col) in ship.coordinates:
+                    ship.register_hit(row, col)
+                    if ship.is_sunk():
+                        return "sunk"
+                    else:
+                        return "hit"
+        
+        #otherwise it was water
+        if cell == Board.EMPTY:
+            self.grid[row][col] = Board.MISS
+            return "miss"
     
     def all_ship_sunk(self) -> bool:
-        """
-        Return True if every ship on this board is sunk.
-        """
-        # TODO:
-        # loop over self.ships and check ship.is_sunk()
-        return False  # placeholder
+        """Return True if every ship on this board is sunk."""
+        for ship in self.ships:
+            if not ship._is_sunk():
+                return False
+            return True
     
