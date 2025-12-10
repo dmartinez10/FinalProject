@@ -8,13 +8,11 @@ from game import Game
 from gui import BattleshipGUI
 
 def main():
-    game = Game(board_size=10)
-
-    root = tk.TK()
-
-    BattleshipGUI(root, game)
-
+    root = tk.Tk()
+    game = Game(size=10)
+    gui = BattleshipGUI(root, game)
     root.mainloop()
 
 if __name__ == "__main__":
     main()
+
