@@ -126,20 +126,17 @@ class Game:
         except (FileNotFoundError, json.JSONDecodeError):
             return []
         
-    def _save_high_score(self, shots):
-        """saves a new score and keeps only the best 10"""
-        scores = self._load_scores()
-        scores.append({"shots": shots})
+   def _save_high_score(self, shots):
+    """saves a new score and keeps only the best 10"""
+    scores = self._load_high_scores()
+    scores.append({"shots": shots})
 
-        #sorts, fewer shots = better
-        scores.sort(key=lambda s: s["shots"])
+    scores.sort(key=lambda s: s["shots"])
+    scores = scores[:10]
 
-        #keep best 10
-        scores = scores[:10]
-
-        with open("highscores.json", "w") as f:
-            json.dump(scores, f, indent=2)
-
+    with open("highscores.json", "w") as f:
+        json.dump(scores, f, indent=2)
+            
     def get_high_scores(self):
         """allows GUI to read high score"""
         return self._load_high_scores
