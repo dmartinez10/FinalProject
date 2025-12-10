@@ -117,7 +117,7 @@ class Game:
         return (row, col, result)
     
 #EXTRA CREDIT section HIGH SCORE
-
+        
     def _load_high_scores(self):
         """Loads saved scores from highscores.json"""
         try:
@@ -126,17 +126,16 @@ class Game:
         except (FileNotFoundError, json.JSONDecodeError):
             return []
         
-   def _save_high_score(self, shots):
-    """saves a new score and keeps only the best 10"""
-    scores = self._load_high_scores()
-    scores.append({"shots": shots})
+       def _save_high_score(self, shots):
+        scores = self._load_high_scores()
+        scores.append({"shots": shots})
 
-    scores.sort(key=lambda s: s["shots"])
-    scores = scores[:10]
+        scores.sort(key=lambda s: s["shots"])
+        scores = scores[:10]
 
-    with open("highscores.json", "w") as f:
-        json.dump(scores, f, indent=2)
-            
+        with open("highscores.json", "w") as f:
+            json.dump(scores, f, indent=2)
+
     def get_high_scores(self):
         """allows GUI to read high score"""
-        return self._load_high_scores
+        return self._load_high_scores()
