@@ -90,7 +90,7 @@ class BattleshipGUI:
         high_scores_btn = tk.Button(self.root, text="show high scores", command=self.show_high_scores)
         high_scores_btn.grid(row=4, column=0, columnspan=4, pady=5)
 
-    def _update_boards(self) -> None:
+    def _update_boards(self):
         """
         update button text and color based on each board's grid state.
 
@@ -143,7 +143,7 @@ class BattleshipGUI:
 
                 btn.config(text=text, bg=bg)
 
-    def on_computer_cell_click(self, row: int, col: int) -> None:
+    def on_computer_cell_click(self, row, col):
         """
         handle player clicking on the computer's board.
         """
@@ -193,7 +193,7 @@ class BattleshipGUI:
             # small delay so it feels like turns
             self.root.after(500, self.computer_turn)
 
-    def computer_turn(self) -> None:
+    def computer_turn(self):
         """
         let the computer take a shot, then update everything.
         """
@@ -227,7 +227,7 @@ class BattleshipGUI:
         # update the board after computer's move
         self._update_boards()
 
-    def show_high_scores(self) -> None:
+    def show_high_scores(self):
         """
         show a simple message box with list of high scores.
         """

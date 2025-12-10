@@ -126,7 +126,7 @@ class Game:
         except (FileNotFoundError, json.JSONDecodeError):
             return []
         
-       def _save_high_score(self, shots):
+    def _save_high_score(self, shots):
         scores = self._load_high_scores()
         scores.append({"shots": shots})
 
