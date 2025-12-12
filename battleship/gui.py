@@ -31,7 +31,7 @@ class BattleshipGUI:
         self._build_layout()
         self._update_boards()
 
-    def _build_layout(self) -> None:
+    def _build_layout(self):
         """create labels, frames, and all buttons."""
         size = self.game.size
 

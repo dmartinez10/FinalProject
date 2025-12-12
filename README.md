@@ -20,6 +20,7 @@ In the project folder:
 ```bash
 python3 main.py
 
+## What Each file contains
 board.py - this contains board grid, hits/misses, ship storage
 game.py - game, flow, turns, win logic, high scores
 gui.py - Tkinter interface and button interactions
